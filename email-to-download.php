@@ -1,6 +1,6 @@
 <?php
 /**
- * Plugin Name:	Email To Download
+ * Plugin Name:	Email To Download for Parallel Financial
  * Plugin URI:	https://github.com/hampton1122/email-to-download
  * Author:		Chris Hampton
  * Author URI:	https://github.com/hampton1122/email-to-download
