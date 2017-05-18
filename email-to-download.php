@@ -57,8 +57,8 @@ function etd_auth_create_table()
     id int(11) NOT NULL AUTO_INCREMENT,
     time timestamp DEFAULT CURRENT_TIMESTAMP' ON UPDATE CURRENT_TIMESTAMP,
     first_name varchar(255) NULL DEFAULT NOT NULL,
-    last_name varchar(100) DEFAULT DEFAULT NOT NULL,
-    email varchar(100) DEFAULT DEFAULT NOT NULL,
+    last_name varchar(255) DEFAULT DEFAULT NOT NULL,
+    email varchar(255) DEFAULT DEFAULT NOT NULL,
     PRIMARY KEY  (id)
     ) $charset_collate;";
 
@@ -81,3 +81,19 @@ function etd_update_db_check() {
     }
 }
 add_action( 'plugins_loaded', 'etd_update_db_check' );
+
+
+function etd_css_and_js() {
+wp_register_style('etd-css', plugins_url('css/etd-style.css',__FILE__ ));
+wp_enqueue_style('etd-css');
+wp_register_script( 'etd-js', plugins_url('js/etd-js.js',__FILE__ ));
+wp_enqueue_script('etd-js');
+
+wp_register_script('jquery-ui', 'http://ajax.googleapis.com/ajax/libs/jqueryui/1.10.2/jquery-ui.min.js');
+wp_enqueue_script( 'jquery' );
+
+wp_register_script('jquery-ui', 'http://ajax.googleapis.com/ajax/libs/jqueryui/1.10.2/jquery-ui.min.js');
+wp_enqueue_script( 'jquery-ui' );
+
+}
+add_action( 'admin_init','etd_css_and_js');
