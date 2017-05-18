@@ -113,7 +113,7 @@ function save_email() {
     $wpdb->insert($table_name, array(
         'first_name' => $first_name,
         'last_name' => $last_name,
-        'email' => 'kumkum@gmail.com',
+        'email' => $email,
     ));
 
 	echo "success";
