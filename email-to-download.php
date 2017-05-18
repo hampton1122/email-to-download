@@ -97,3 +97,26 @@ wp_enqueue_script( 'jquery-ui' );
 
 }
 add_action( 'admin_init','etd_css_and_js');
+
+
+add_action( 'wp_ajax_save_email', 'save_email' );
+
+function save_email() {
+	global $wpdb; 
+
+    $table_name = $wpdb->prefix."etd_subscribers";
+
+	$first_name = $_POST['first_name'];
+    $last_name = $_POST['last_name'];
+    $email = $_POST['email'];
+
+    $wpdb->insert($table_name, array(
+        'first_name' => $first_name,
+        'last_name' => $last_name,
+        'email' => 'kumkum@gmail.com',
+    ));
+
+	echo "success";
+
+	wp_die(); // this is required to terminate immediately and return a proper response
+}
