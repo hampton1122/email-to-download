@@ -1,11 +1,11 @@
 jQuery(document).ready(function () {
 
-    //edit the year in the footer
-    var d = new Date();
-    var year = d.getFullYear();
-    jQuery(".mk-footer-copyright").html("Copyright All Rights Reserved ©" + new Date().getFullYear());
 
     jQuery('.download').click(function () {
+
+        jQuery.curCSS = function(element, prop, val) {
+            return jQuery(element).css(prop, val);
+        };
 
         var html = '<form id="modalform" style="display:none"><input type="hidden" value="save_email"><input type="text" name="first_name" placeholder="First Name"> <input type="text" name="last_name" placeholder="Last Name"> <input type="text" name="email" placeholder="email"></form>';
         jQuery("#modalform").dialog({
