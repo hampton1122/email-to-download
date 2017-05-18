@@ -101,8 +101,9 @@ function etd_css_and_js() {
 add_action( 'wp_enqueue_scripts','etd_css_and_js');
 
 
-add_action( 'wp_ajax_save_email', 'save_email' );
-function save_email() {
+add_action('wp_ajax_saveEmail', 'saveEmail' );
+add_action('wp_ajax_nopriv_saveEmail', 'saveEmail');
+function saveEmail() {
 	global $wpdb; 
 
     $table_name = $wpdb->prefix."etd_subscribers";
@@ -111,18 +112,65 @@ function save_email() {
     $last_name = $_POST['last_name'];
     $email = $_POST['email'];
 
-    $wpdb->insert($table_name, array(
-        'first_name' => $first_name,
-        'last_name' => $last_name,
-        'email' => $email,
-    ));
+    $emailExists = $wpdb->get_var("SELECT COUNT(*) FROM ".$table_name." WHERE email ='".$email."'");
 
+    if(emailExists > 0){
+        $wpdb->insert($table_name, array(
+            'first_name' => $first_name,
+            'last_name' => $last_name,
+            'email' => $email,
+        ));
+    }
+    
+    //create email
     $subject="Free eBook from Parallel Financial";
     $body = "<p>Dear ".$first_name." ". $last_nameThanks.",<br><br> for your interest in our free eBook. <a href='http://pfinancial.wpengine.com/wp-content/uploads/2017/05/test.pdf'>Click here</a> to download your free ebook.</p>";
 
-    wp_mail($email, $subject,$body);
+    add_filter( 'wp_mail_content_type', 'set_html_content_type' );
+    $emailStatus = wp_mail($email, $subject, $body);
+    remove_filter( 'wp_mail_content_type', 'set_html_content_type' );
+    
+    $array = array('status' => 'success','email' => $emailStatus);
 
-	echo "success";
+    echo json_encode($array);
 
 	wp_die(); // this is required to terminate immediately and return a proper response
+}
+
+function set_html_content_type() {
+	return 'text/html';
+}
+
+
+//admin page
+add_action('admin_menu', 'email_to_download_menu');
+function email_to_download_menu() {
+    $page_title = 'Email to Download';
+    $menu_title = 'Email to Download Data';
+    $capability = 'manage_options';
+    $menu_slug  = 'eemail_to_download_info';
+    $function   = 'email_to_download_menu_content';
+    $icon_url   = 'dashicons-media-code';
+    $position   = 4;
+
+    add_menu_page( $page_title,
+                    $menu_title, 
+                    $capability, 
+                    $menu_slug, 
+                    $function, 
+                    $icon_url, 
+                    $position );
+}
+
+function email_to_download_menu_content() {
+    global $wpdb;
+    
+    echo "<h2> Email to Download</h2>";
+    $table_name = $wpdb->prefix."etd_subscribers";
+    $results = $wpdb->get_results("SELECT * FROM ".$table_name);
+
+    foreach($results as $result)
+    {
+        echo "<li>".$result->email."</li>";
+    }
 }
