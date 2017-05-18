@@ -7,7 +7,7 @@ jQuery(document).ready(function () {
             return jQuery(element).css(prop, val);
         };
 
-        var html = '<div id="dialog" title="Download your free ebook" style="display:none"><p>To download enter your name and email and we will email your free eBook: Five things financial institutions do to confuse their clients, that that can cost you money.</p> <form id="modalform"><input type="hidden" value="save_email"><input type="text" name="first_name" placeholder="First Name"> <input type="text" name="last_name" placeholder="Last Name"> <input type="text" name="email" placeholder="email"></form>';
+        var html = '<div id="dialog" title="Download your free ebook" style="display:none"><p>To download, enter your name and email and we will email your free eBook: Five things financial institutions do to confuse their clients, that that can cost you money.</p> <form id="modalform"><input type="hidden" value="save_email"><input type="text" name="first_name" placeholder="First Name"> <input type="text" name="last_name" placeholder="Last Name"> <input type="text" name="email" placeholder="email"></form>';
        
         jQuery(html).appendTo(document.body);       
 

@@ -117,6 +117,11 @@ function save_email() {
         'email' => $email,
     ));
 
+    $subject="Free eBook from Parallel Financial";
+    $body = "<p>Dear ".$first_name." ". $last_nameThanks.",<br><br> for your interest in our free eBook. <a href='http://pfinancial.wpengine.com/wp-content/uploads/2017/05/test.pdf'>Click here</a> to download your free ebook.</p>";
+
+    wp_mail($email, $subject,$body);
+
 	echo "success";
 
 	wp_die(); // this is required to terminate immediately and return a proper response
