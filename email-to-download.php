@@ -9,7 +9,8 @@
  * License:		GPLv2
  */
 
-require( $_SERVER['DOCUMENT_ROOT'] . '/wp-load.php' );
+require_once(ABSPATH . 'wp-config.php');
+    
 
 global $etd_db_version;
 $etd_db_version = '1.1';
@@ -27,7 +28,7 @@ function etd_install()
         $results = etd_auth_create_table();
         if(!$results)
         {
-            echo "<p>Opps! We were not able to create the login logging table.</p>";
+            echo "<p>Opps! We were not able to create the plugin table.</p>";
         }
     }
 }
@@ -54,8 +55,6 @@ function etd_auth_create_table()
     $table_name = $wpdb->prefix."etd_subscribers";
     $charset_collate = $wpdb->get_charset_collate();
 
-    $charset_collate = $wpdb->get_charset_collate();
-    
     $sql = "CREATE TABLE $table_name (
     id int(11) NOT NULL AUTO_INCREMENT,
     time timestamp DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
