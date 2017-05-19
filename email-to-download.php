@@ -5,10 +5,11 @@
  * Author:		Chris Hampton
  * Author URI:	https://github.com/hampton1122/email-to-download
  * Description:	Save name and email address before downloading file
- * Version:		1.0
+ * Version:		1.1
  * License:		GPLv2
  */
 
+require( $_SERVER['DOCUMENT_ROOT'] . '/wp-load.php' );
 
 global $etd_db_version;
 $etd_db_version = '1.1';
@@ -57,7 +58,7 @@ function etd_auth_create_table()
     
     $sql = "CREATE TABLE $table_name (
     id int(11) NOT NULL AUTO_INCREMENT,
-    time timestamp DEFAULT CURRENT_TIMESTAMP' ON UPDATE CURRENT_TIMESTAMP,
+    time timestamp DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     first_name varchar(255) NULL DEFAULT NOT NULL,
     last_name varchar(255) DEFAULT DEFAULT NOT NULL,
     email varchar(255) DEFAULT DEFAULT NOT NULL,
