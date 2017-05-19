@@ -61,7 +61,7 @@ function etd_auth_create_table()
     first_name varchar(255) NOT NULL,
     last_name varchar(255) NOT NULL,
     email varchar(255) NOT NULL,
-    PRIMARY KEY  (id)
+    UNIQUE KEY id (id)
     ) $charset_collate;";
 
     require_once( ABSPATH . 'wp-admin/includes/upgrade.php' );
@@ -115,9 +115,9 @@ function saveEmail() {
 
     if($_POST['first_name'] > '' && $_POST['last_name'] > '' && $_POST['email_address'] > '')
     {
-        $emailExists = $wpdb->get_var("SELECT COUNT(*) FROM ".$table_name." WHERE email ='".$email_address."'");
+        $emailExists = $wpdb->get_results("SELECT * FROM ".$table_name." WHERE email ='".$email_address."'");
 
-        if(emailExists == 0){
+        if(count($emailExists) == 0){
             $wpdb->insert($table_name, array(
                 'first_name' => $first_name,
                 'last_name' => $last_name,
@@ -177,8 +177,13 @@ function email_to_download_menu_content() {
     $table_name = $wpdb->prefix."etd_subscribers";
     $results = $wpdb->get_results("SELECT * FROM ".$table_name);
 
-    foreach($results as $result)
+    if(count($results) > 0)
     {
-        echo "<li>".$result->first_name." ".$result->last_name." <a href='mailto:".$result->email."'>".$result->email."</a></li>";
+        foreach($results as $result)
+        {
+            echo "<li>".$result->first_name." ".$result->last_name." <a href='mailto:".$result->email."'>".$result->email."</a></li>";
+        }
+    } else {
+        echo "<p>Sorry, there are no downloads yet.</p>";
     }
 }
