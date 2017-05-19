@@ -9,10 +9,10 @@
  * License:		GPLv2
  */
 
-require_once(ABSPATH . 'wp-config.php');
+require_once(ABSPATH . 'wp-load.php');
     
 
-global $etd_db_version;
+global $etd_db_version, $wpdb;
 $etd_db_version = '1.1';
 
 register_activation_hook( __FILE__, 'etd_install' );
@@ -91,6 +91,7 @@ function etd_css_and_js() {
 
     wp_register_script( 'etd-js', plugins_url('js/etd-js.js',__FILE__ ), array('jquery', 'jquery-effects-core', 'jquery-ui-core'));
     wp_enqueue_script('etd-js');
+    wp_localize_script( 'etd-js', 'etdAjax', array( 'ajaxurl' => admin_url( 'admin-ajax.php' ) ) );
 
     wp_enqueue_script('jquery-ui', '//code.jquery.com/ui/1.12.1/jquery-ui.js', false, '1.8.8');
 
@@ -110,28 +111,34 @@ function saveEmail() {
 
 	$first_name = $_POST['first_name'];
     $last_name = $_POST['last_name'];
-    $email = $_POST['email'];
+    $email_address = $_POST['email_address'];
 
-    $emailExists = $wpdb->get_var("SELECT COUNT(*) FROM ".$table_name." WHERE email ='".$email."'");
+    if($_POST['first_name'] > '' && $_POST['last_name'] > '' && $_POST['email_address'] > '')
+    {
+        $emailExists = $wpdb->get_var("SELECT COUNT(*) FROM ".$table_name." WHERE email ='".$email_address."'");
 
-    if(emailExists > 0){
-        $wpdb->insert($table_name, array(
-            'first_name' => $first_name,
-            'last_name' => $last_name,
-            'email' => $email,
-        ));
+        if(emailExists == 0){
+            $wpdb->insert($table_name, array(
+                'first_name' => $first_name,
+                'last_name' => $last_name,
+                'email' => $email_address,
+            ));
+        }
+        
+
+        //create email
+        $subject="Free eBook from Parallel Financial";
+        $body = "<p>Dear ".$first_name." ". $last_nameThanks.",<br><br> Thank you for your interest in our free eBook. <a href='http://pfinancial.wpengine.com/wp-content/uploads/2017/05/test.pdf'>Click here</a> to download your free ebook.</p>";
+
+        add_filter( 'wp_mail_content_type', 'set_html_content_type' );
+        $emailStatus = wp_mail($email_address, $subject, $body);
+        remove_filter( 'wp_mail_content_type', 'set_html_content_type' );
+        
+        $array = array('status' => 'success','email' => $emailStatus, 'first_name'=>$first_name, 'last_name' => $last_name, 'email_address' => $email_address);
+    } else 
+    {
+        $array = array('status' => 'error','email' => false, 'first_name'=>$first_name, 'last_name' => $last_name, 'email_address' => $email_address);
     }
-    
-    //create email
-    $subject="Free eBook from Parallel Financial";
-    $body = "<p>Dear ".$first_name." ". $last_nameThanks.",<br><br> for your interest in our free eBook. <a href='http://pfinancial.wpengine.com/wp-content/uploads/2017/05/test.pdf'>Click here</a> to download your free ebook.</p>";
-
-    add_filter( 'wp_mail_content_type', 'set_html_content_type' );
-    $emailStatus = wp_mail($email, $subject, $body);
-    remove_filter( 'wp_mail_content_type', 'set_html_content_type' );
-    
-    $array = array('status' => 'success','email' => $emailStatus);
-
     echo json_encode($array);
 
 	wp_die(); // this is required to terminate immediately and return a proper response
@@ -146,9 +153,9 @@ function set_html_content_type() {
 add_action('admin_menu', 'email_to_download_menu');
 function email_to_download_menu() {
     $page_title = 'Email to Download';
-    $menu_title = 'Email to Download Data';
+    $menu_title = 'Email to Download';
     $capability = 'manage_options';
-    $menu_slug  = 'eemail_to_download_info';
+    $menu_slug  = 'email_to_download_info';
     $function   = 'email_to_download_menu_content';
     $icon_url   = 'dashicons-media-code';
     $position   = 4;
@@ -166,11 +173,12 @@ function email_to_download_menu_content() {
     global $wpdb;
     
     echo "<h2> Email to Download</h2>";
+    echo "<p>Below is a list of people who have downloaded the free eBook.</p>";
     $table_name = $wpdb->prefix."etd_subscribers";
     $results = $wpdb->get_results("SELECT * FROM ".$table_name);
 
     foreach($results as $result)
     {
-        echo "<li>".$result->email."</li>";
+        echo "<li>".$result->first_name." ".$result->last_name." <a href='mailto:".$result->email."'>".$result->email."</a></li>";
     }
 }
