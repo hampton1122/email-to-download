@@ -57,7 +57,7 @@ function etd_auth_create_table()
 
     $sql = "CREATE TABLE $table_name (
     id int(11) NOT NULL AUTO_INCREMENT,
-    time timestamp DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    time_downloaded TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     first_name varchar(255) NULL DEFAULT NOT NULL,
     last_name varchar(255) DEFAULT DEFAULT NOT NULL,
     email varchar(255) DEFAULT DEFAULT NOT NULL,
