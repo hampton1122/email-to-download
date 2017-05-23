@@ -193,6 +193,7 @@ function email_to_download_menu_content() {
     global $wpdb;
     
     echo "<h2> Email to Download</h2>";
+    echo "<p>[<a href='options-general.php?page=email-to-download%2Femail-to-download.php'>Settings</a>]</p>";
     echo "<p>Below is a list of people who have downloaded the free eBook.</p>";
     $table_name = $wpdb->prefix."etd_subscribers";
     $results = $wpdb->get_results("SELECT * FROM ".$table_name);
@@ -252,10 +253,9 @@ function email_to_download_settings_content()
     echo "<h2>Email to Download Settings</h2>";
     echo "<p>Configure the email that is sent with the download and what file is being offered to download.</p>";
     $settings = $wpdb->get_results("SELECT * FROM ".$table_name);
-    
-    
-    
+
     ?>
+    <p><strong>INSTRUCTIONS: </strong>Use the following keys in your message and they will be replaced by the user's name data when requesting a download: [first_name] and [last_name]</p>
     <form action="" method="post">
         <div class=''>
             <input class="regular-text code" type='hidden' name='id' id='id' value='<?php echo $settings[0]->id;?>'>
