@@ -53,6 +53,7 @@ function etd_auth_create_table()
 {
     global $wpdb;
     $table_name = $wpdb->prefix."etd_subscribers";
+    $settings_table = $wpdb->prefix."etd_settings";
     $charset_collate = $wpdb->get_charset_collate();
 
     $sql = "CREATE TABLE $table_name (
@@ -64,10 +65,18 @@ function etd_auth_create_table()
     UNIQUE KEY id (id)
     ) $charset_collate;";
 
+    $sql2 = "CREATE TABLE $settings_table (
+    id int(11) NOT NULL AUTO_INCREMENT,
+    email_subject varchar(255) NOT NULL,
+    email_text varchar(255) NOT NULL,
+    UNIQUE KEY id (id)
+    ) $charset_collate;";
+
     require_once( ABSPATH . 'wp-admin/includes/upgrade.php' );
     try
     {
         dbDelta( $sql );
+        dbDelta( $sql2 );
         return true;
     }
     catch(Exception $e)
@@ -127,11 +136,19 @@ function saveEmail() {
         
 
         //create email
-        $subject="Free eBook from Parallel Financial";
-        $body = "<p>Dear ".$first_name." ". $last_nameThanks.",<br><br> Thank you for your interest in our free eBook. <a href='http://pfinancial.wpengine.com/wp-content/uploads/2017/05/test.pdf'>Click here</a> to download your free ebook.</p>";
+        $admin_email = get_option('admin_email');
+        $admin_name = "Parallel Financial";
+
+        $table_name = $wpdb->prefix."etd_settings";
+        $settings = $wpdb->get_results("SELECT * FROM ".$table_name);
+
+        $headers = array('From: '.$admin_name.' <'.$admin_email.'>');
+        
+        $body = str_replace("[first_name]", $first_name, $settings[0]->email_text );
+        $body = str_replace("[last_name]", $last_name, $settings[0]->email_text  );
 
         add_filter( 'wp_mail_content_type', 'set_html_content_type' );
-        $emailStatus = wp_mail($email_address, $subject, $body);
+        $emailStatus = wp_mail($email_address, $settings[0]->email_subject, $body, $headers);
         remove_filter( 'wp_mail_content_type', 'set_html_content_type' );
         
         $array = array('status' => 'success','email' => $emailStatus, 'first_name'=>$first_name, 'last_name' => $last_name, 'email_address' => $email_address);
@@ -167,6 +184,8 @@ function email_to_download_menu() {
                     $function, 
                     $icon_url, 
                     $position );
+
+    add_options_page('ETD Settings', 'ETD Settings', 'manage_options', __FILE__, 'email_to_download_settings_content');
 }
 
 function email_to_download_menu_content() {
@@ -186,4 +205,77 @@ function email_to_download_menu_content() {
     } else {
         echo "<p>Sorry, there are no downloads yet.</p>";
     }
+}
+
+
+
+function email_to_download_settings_content()
+{
+    global $wpdb;
+    $table_name = $wpdb->prefix."etd_settings";
+
+        
+     $action = $_POST['action'];
+     $email_text = $_POST['email_text'];
+     $email_subject = $_POST['email_subject'];
+     $id = $_POST['id'];
+
+
+    if($action == 'saveSettings'){
+        $settings = $wpdb->get_results("SELECT * FROM ".$table_name);
+        
+        if(count($settings) == 0){
+            $wpdb->insert($table_name, array(
+                'email_text' => $email_text,
+                'email_subject' => $email_subject,
+            ));
+        } else {
+            $wpdb->update($table_name, array(
+                'email_text' => $email_text,
+                'email_subject' => $email_subject,
+            ),
+            array( 'id' => $id  ),
+            array( '%s', '%s' ), 
+            array( '%d' ) 
+            );
+        }
+    }
+    
+    // Save attachment ID
+    if ( isset( $_POST['submit_image_selector'] ) && isset( $_POST['file_attachment_id'] ) ) :
+	    update_option( 'media_selector_attachment_id', absint( $_POST['file_attachment_id'] ) );
+    endif;
+
+    wp_enqueue_media();
+
+    echo "<h2>Email to Download Settings</h2>";
+    echo "<p>Configure the email that is sent with the download and what file is being offered to download.</p>";
+    $settings = $wpdb->get_results("SELECT * FROM ".$table_name);
+    
+    
+    
+    ?>
+    <form action="" method="post">
+        <div class=''>
+            <input class="regular-text code" type='hidden' name='id' id='id' value='<?php echo $settings[0]->id;?>'>
+            <input type='hidden' name='action' id='action' value='saveSettings' />
+        </div>
+        <div style="height: 15px;"></div>
+        <div>
+            <input class="regular-text code" type='text' name='email_subject' id='email_subject' placeholder='Email subject' value='<?php echo $settings[0]->email_subject; ?>' />
+        </div>
+        <div style="height: 15px;"></div>
+        <div>
+            <?php 
+            //editor
+            $editor_id = 'email_text';
+            wp_editor( $settings[0]->email_text, $editor_id );
+            ?>
+        </div>
+        <div class =''>
+            <p class="submit"><input type="submit" name="submit" id="submit" class="button button-primary" value="Save Changes"></p>
+        </div>
+    </form>
+    <?php
+
 }
