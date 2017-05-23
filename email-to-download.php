@@ -124,6 +124,7 @@ function saveEmail() {
 
     if($_POST['first_name'] > '' && $_POST['last_name'] > '' && $_POST['email_address'] > '')
     {
+        //add record
         $emailExists = $wpdb->get_results("SELECT * FROM ".$table_name." WHERE email ='".$email_address."'");
 
         if(count($emailExists) == 0){
@@ -143,12 +144,12 @@ function saveEmail() {
         $settings = $wpdb->get_results("SELECT * FROM ".$table_name);
 
         $headers = array('From: '.$admin_name.' <'.$admin_email.'>');
-        
-        $body = str_replace("[first_name]", $first_name, $settings[0]->email_text );
-        $body = str_replace("[last_name]", $last_name, $settings[0]->email_text  );
+
+        $array = array('[first_name]' => $first_name, '[last_name]' => $last_name);
+        $message = str_replace(array_keys($array), array_values($array), $settings[0]->email_text);
 
         add_filter( 'wp_mail_content_type', 'set_html_content_type' );
-        $emailStatus = wp_mail($email_address, $settings[0]->email_subject, $body, $headers);
+        $emailStatus = wp_mail($email_address, $settings[0]->email_subject, $message, $headers);
         remove_filter( 'wp_mail_content_type', 'set_html_content_type' );
         
         $array = array('status' => 'success','email' => $emailStatus, 'first_name'=>$first_name, 'last_name' => $last_name, 'email_address' => $email_address);
