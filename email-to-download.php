@@ -10,7 +10,7 @@
  */
 
 require_once(ABSPATH . 'wp-load.php');
-    
+
 
 global $etd_db_version, $wpdb;
 $etd_db_version = '1.1';
@@ -23,7 +23,7 @@ function etd_install()
     global $wpdb;
 
     $table_name = $wpdb->prefix."etd_subscribers";
-    if($wpdb->get_var("SHOW TABLES LIKE '$table_name'") != $table_name) 
+    if($wpdb->get_var("SHOW TABLES LIKE '$table_name'") != $table_name)
     {
         $results = etd_auth_create_table();
         if(!$results)
@@ -114,7 +114,7 @@ add_action( 'wp_enqueue_scripts','etd_css_and_js');
 add_action('wp_ajax_saveEmail', 'saveEmail' );
 add_action('wp_ajax_nopriv_saveEmail', 'saveEmail');
 function saveEmail() {
-	global $wpdb; 
+	global $wpdb;
 
     $table_name = $wpdb->prefix."etd_subscribers";
 
@@ -134,7 +134,7 @@ function saveEmail() {
                 'email' => $email_address,
             ));
         }
-        
+
 
         //create email
         $admin_email = get_option('admin_email');
@@ -151,9 +151,9 @@ function saveEmail() {
         add_filter( 'wp_mail_content_type', 'set_html_content_type' );
         $emailStatus = wp_mail($email_address, $settings[0]->email_subject, $message, $headers);
         remove_filter( 'wp_mail_content_type', 'set_html_content_type' );
-        
+
         $array = array('status' => 'success','email' => $emailStatus, 'first_name'=>$first_name, 'last_name' => $last_name, 'email_address' => $email_address);
-    } else 
+    } else
     {
         $array = array('status' => 'error','email' => false, 'first_name'=>$first_name, 'last_name' => $last_name, 'email_address' => $email_address);
     }
@@ -179,11 +179,11 @@ function email_to_download_menu() {
     $position   = 4;
 
     add_menu_page( $page_title,
-                    $menu_title, 
-                    $capability, 
-                    $menu_slug, 
-                    $function, 
-                    $icon_url, 
+                    $menu_title,
+                    $capability,
+                    $menu_slug,
+                    $function,
+                    $icon_url,
                     $position );
 
     add_options_page('ETD Settings', 'ETD Settings', 'manage_options', __FILE__, 'email_to_download_settings_content');
@@ -191,9 +191,11 @@ function email_to_download_menu() {
 
 function email_to_download_menu_content() {
     global $wpdb;
-    
+    $plugin_url = plugin_dir_url( __FILE__ );
+
+
     echo "<h2> Email to Download</h2>";
-    echo "<p>[<a href='options-general.php?page=email-to-download%2Femail-to-download.php'>Settings</a>]</p>";
+    echo "<p>[<a href='options-general.php?page=email-to-download%2Femail-to-download.php'>Settings</a>] [<a href='".$plugin_url."email-to-download-export.php?action=export'>Export</a>]</p>";
     echo "<p>Below is a list of people who have downloaded the free eBook.</p>";
     $table_name = $wpdb->prefix."etd_subscribers";
     $results = $wpdb->get_results("SELECT * FROM ".$table_name);
@@ -216,7 +218,7 @@ function email_to_download_settings_content()
     global $wpdb;
     $table_name = $wpdb->prefix."etd_settings";
 
-        
+
      $action = $_POST['action'];
      $email_text = $_POST['email_text'];
      $email_subject = $_POST['email_subject'];
@@ -225,7 +227,7 @@ function email_to_download_settings_content()
 
     if($action == 'saveSettings'){
         $settings = $wpdb->get_results("SELECT * FROM ".$table_name);
-        
+
         if(count($settings) == 0){
             $wpdb->insert($table_name, array(
                 'email_text' => $email_text,
@@ -237,12 +239,12 @@ function email_to_download_settings_content()
                 'email_subject' => $email_subject,
             ),
             array( 'id' => $id  ),
-            array( '%s', '%s' ), 
-            array( '%d' ) 
+            array( '%s', '%s' ),
+            array( '%d' )
             );
         }
     }
-    
+
     // Save attachment ID
     if ( isset( $_POST['submit_image_selector'] ) && isset( $_POST['file_attachment_id'] ) ) :
 	    update_option( 'media_selector_attachment_id', absint( $_POST['file_attachment_id'] ) );
@@ -267,7 +269,7 @@ function email_to_download_settings_content()
         </div>
         <div style="height: 15px;"></div>
         <div>
-            <?php 
+            <?php
             //editor
             $editor_id = 'email_text';
             wp_editor( $settings[0]->email_text, $editor_id );
