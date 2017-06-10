@@ -17,6 +17,36 @@ $etd_db_version = '1.1';
 
 register_activation_hook( __FILE__, 'etd_install' );
 
+// Our custom post type function
+function create_posttype() {
+
+	register_post_type( 'email-to-download',
+	// CPT Options
+		array(
+			'labels' => array(
+				'name' => __( 'ETDs' ),
+				'singular_name' => __( 'ETD' )
+			),
+			'public' => true,
+			'has_archive' => true,
+			'rewrite' => array('slug' => 'email-to-download'),
+		)
+	);
+}
+// Hooking up our function to theme setup
+add_action( 'init', 'create_posttype' );
+
+function custom_post_type_boxes(){
+    remove_meta_box( 'postexcerpt', 'email-to-download', 'normal' );
+    add_meta_box( 'postexcerpt', __( 'Email Subject' ), 'post_excerpt_meta_box', 'email-to-download', 'normal', 'high' );
+}
+add_action('do_meta_boxes', 'custom_post_type_boxes');
+
+
+add_action('admin_menu', 'etd_add_pages');
+function etd_add_pages(){
+    add_submenu_page('edit.php?post_type=email-to-download', __('Downloaders','menu-etd'), __('Downloaders','menu-etd'), 'manage_options', 'downloaders', 'email_to_download_menu_content');
+}
 
 function etd_install()
 {
@@ -65,18 +95,10 @@ function etd_auth_create_table()
     UNIQUE KEY id (id)
     ) $charset_collate;";
 
-    $sql2 = "CREATE TABLE $settings_table (
-    id int(11) NOT NULL AUTO_INCREMENT,
-    email_subject varchar(255) NOT NULL,
-    email_text varchar(255) NOT NULL,
-    UNIQUE KEY id (id)
-    ) $charset_collate;";
-
     require_once( ABSPATH . 'wp-admin/includes/upgrade.php' );
     try
     {
         dbDelta( $sql );
-        dbDelta( $sql2 );
         return true;
     }
     catch(Exception $e)
@@ -121,6 +143,11 @@ function saveEmail() {
 	$first_name = $_POST['first_name'];
     $last_name = $_POST['last_name'];
     $email_address = $_POST['email_address'];
+    $slug = $_POST['slug'];
+
+    //get email content from custom post type
+    $emailPost = get_page_by_path( $slug, OBJECT, 'email-to-download' );
+
 
     if($_POST['first_name'] > '' && $_POST['last_name'] > '' && $_POST['email_address'] > '')
     {
@@ -140,16 +167,16 @@ function saveEmail() {
         $admin_email = get_option('admin_email');
         $admin_name = "Parallel Financial";
 
-        $table_name = $wpdb->prefix."etd_settings";
-        $settings = $wpdb->get_results("SELECT * FROM ".$table_name);
+        //get email content from custom post type
+        $emailPost = get_page_by_path( $slug, OBJECT, 'email-to-download' );
 
         $headers = array('From: '.$admin_name.' <'.$admin_email.'>');
 
         $array = array('[first_name]' => $first_name, '[last_name]' => $last_name);
-        $message = str_replace(array_keys($array), array_values($array), $settings[0]->email_text);
+        $message = str_replace(array_keys($array), array_values($array), $emailPost->post_content);
 
         add_filter( 'wp_mail_content_type', 'set_html_content_type' );
-        $emailStatus = wp_mail($email_address, $settings[0]->email_subject, $message, $headers);
+        $emailStatus = wp_mail($email_address, $emailPost->post_excerpt, $message, $headers);
         remove_filter( 'wp_mail_content_type', 'set_html_content_type' );
 
         $array = array('status' => 'success','email' => $emailStatus, 'first_name'=>$first_name, 'last_name' => $last_name, 'email_address' => $email_address);
@@ -167,35 +194,12 @@ function set_html_content_type() {
 }
 
 
-//admin page
-add_action('admin_menu', 'email_to_download_menu');
-function email_to_download_menu() {
-    $page_title = 'Email to Download';
-    $menu_title = 'Email to Download';
-    $capability = 'manage_options';
-    $menu_slug  = 'email_to_download_info';
-    $function   = 'email_to_download_menu_content';
-    $icon_url   = 'dashicons-media-code';
-    $position   = 4;
-
-    add_menu_page( $page_title,
-                    $menu_title,
-                    $capability,
-                    $menu_slug,
-                    $function,
-                    $icon_url,
-                    $position );
-
-    add_options_page('ETD Settings', 'ETD Settings', 'manage_options', __FILE__, 'email_to_download_settings_content');
-}
-
 function email_to_download_menu_content() {
     global $wpdb;
     $plugin_url = plugin_dir_url( __FILE__ );
 
 
     echo "<h2> Email to Download</h2>";
-    echo "<p>[<a href='options-general.php?page=email-to-download%2Femail-to-download.php'>Settings</a>] [<a href='".$plugin_url."email-to-download-export.php?action=export'>Export</a>]</p>";
     echo "<p>Below is a list of people who have downloaded the free eBook.</p>";
     $table_name = $wpdb->prefix."etd_subscribers";
     $results = $wpdb->get_results("SELECT * FROM ".$table_name);
@@ -209,76 +213,4 @@ function email_to_download_menu_content() {
     } else {
         echo "<p>Sorry, there are no downloads yet.</p>";
     }
-}
-
-
-
-function email_to_download_settings_content()
-{
-    global $wpdb;
-    $table_name = $wpdb->prefix."etd_settings";
-
-
-     $action = $_POST['action'];
-     $email_text = $_POST['email_text'];
-     $email_subject = $_POST['email_subject'];
-     $id = $_POST['id'];
-
-
-    if($action == 'saveSettings'){
-        $settings = $wpdb->get_results("SELECT * FROM ".$table_name);
-
-        if(count($settings) == 0){
-            $wpdb->insert($table_name, array(
-                'email_text' => $email_text,
-                'email_subject' => $email_subject,
-            ));
-        } else {
-            $wpdb->update($table_name, array(
-                'email_text' => $email_text,
-                'email_subject' => $email_subject,
-            ),
-            array( 'id' => $id  ),
-            array( '%s', '%s' ),
-            array( '%d' )
-            );
-        }
-    }
-
-    // Save attachment ID
-    if ( isset( $_POST['submit_image_selector'] ) && isset( $_POST['file_attachment_id'] ) ) :
-	    update_option( 'media_selector_attachment_id', absint( $_POST['file_attachment_id'] ) );
-    endif;
-
-    wp_enqueue_media();
-
-    echo "<h2>Email to Download Settings</h2>";
-    echo "<p>Configure the email that is sent with the download and what file is being offered to download.</p>";
-    $settings = $wpdb->get_results("SELECT * FROM ".$table_name);
-
-    ?>
-    <p><strong>INSTRUCTIONS: </strong>Use the following keys in your message and they will be replaced by the user's name data when requesting a download: [first_name] and [last_name]</p>
-    <form action="" method="post">
-        <div class=''>
-            <input class="regular-text code" type='hidden' name='id' id='id' value='<?php echo $settings[0]->id;?>'>
-            <input type='hidden' name='action' id='action' value='saveSettings' />
-        </div>
-        <div style="height: 15px;"></div>
-        <div>
-            <input class="regular-text code" type='text' name='email_subject' id='email_subject' placeholder='Email subject' value='<?php echo $settings[0]->email_subject; ?>' />
-        </div>
-        <div style="height: 15px;"></div>
-        <div>
-            <?php
-            //editor
-            $editor_id = 'email_text';
-            wp_editor( $settings[0]->email_text, $editor_id );
-            ?>
-        </div>
-        <div class =''>
-            <p class="submit"><input type="submit" name="submit" id="submit" class="button button-primary" value="Save Changes"></p>
-        </div>
-    </form>
-    <?php
-
 }

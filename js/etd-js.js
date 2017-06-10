@@ -3,6 +3,8 @@ jQuery(document).ready(function () {
 
     jQuery('.download').click(function () {
 
+        var slug = jQuery(this).attr('id');
+
         jQuery.curCSS = function (element, prop, val) {
             return jQuery(element).css(prop, val);
         };
@@ -30,7 +32,8 @@ jQuery(document).ready(function () {
                                 'action': 'saveEmail',
                                 'first_name': jQuery("#first_name").val(),
                                 'last_name': jQuery("#last_name").val(),
-                                'email_address': jQuery("#email_address").val()
+                                'email_address': jQuery("#email_address").val(),
+                                'slug': slug
                             },
                             function (response) {
                                 var res = JSON.parse(response);
